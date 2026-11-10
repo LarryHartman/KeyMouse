@@ -46,3 +46,4 @@ agent. Run it from a Terminal in that profile.
 ## Versioning
 
 - v1: upstream fix for suspend/resume target, build and install scripts.
+- v2: install script takes a mode (server | client <ip>); client profiles run deskflow-core headless from the launch agent; TLS off for LAN.
