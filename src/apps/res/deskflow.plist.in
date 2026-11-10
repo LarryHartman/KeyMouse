@@ -33,6 +33,10 @@
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.utilities</string>
 
+	<!-- KeyMouse: menu bar app only, no Dock icon -->
+	<key>LSUIElement</key>
+	<true/>
+
 	<!-- Prevent macOS from terminating during memory pressure -->
 	<key>NSSupportsAutomaticTermination</key>
 	<false/>
