@@ -66,15 +66,24 @@ Client::Client(
   assert(m_socketFactory != nullptr);
   assert(m_computer != nullptr);
 
-  // register suspend/resume event handlers
-  m_events->addHandler(EventTypes::ComputerSuspend, getEventTarget(), [this](const auto &) { handleSuspend(); });
-  m_events->addHandler(EventTypes::ComputerResume, getEventTarget(), [this](const auto &) { handleResume(); });
+  // register suspend/resume event handlers.
+  // The platform computer posts ComputerSuspend/ComputerResume to *its own*
+  // event target (fast user switch on macOS, session lock on Windows), so we
+  // must subscribe on that target, not on the client's. Subscribing on the
+  // client's target meant these never fired and a backgrounded session's
+  // client kept its connection, blocking the active session's client.
+  m_events->addHandler(EventTypes::ComputerSuspend, m_computer->getEventTarget(), [this](const auto &) {
+    handleSuspend();
+  });
+  m_events->addHandler(EventTypes::ComputerResume, m_computer->getEventTarget(), [this](const auto &) {
+    handleResume();
+  });
 }
 
 Client::~Client()
 {
-  m_events->removeHandler(EventTypes::ComputerSuspend, getEventTarget());
-  m_events->removeHandler(EventTypes::ComputerResume, getEventTarget());
+  m_events->removeHandler(EventTypes::ComputerSuspend, m_computer->getEventTarget());
+  m_events->removeHandler(EventTypes::ComputerResume, m_computer->getEventTarget());
 
   cleanupTimer();
   cleanupComputer();
