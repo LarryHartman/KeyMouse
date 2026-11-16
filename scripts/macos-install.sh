@@ -83,6 +83,7 @@ echo "==> Wrote $CONF"
 # 3. Launch agent
 mkdir -p "$AGENT_DIR"
 launchctl bootout "gui/$(id -u)/$LABEL" 2>/dev/null || true
+sleep 1
 if [ "$MODE" = "client" ]; then
   # Headless core client; KeepAlive restarts it if it exits.
   cat > "$AGENT" <<PLIST
@@ -124,7 +125,7 @@ else
 </plist>
 PLIST
 fi
-launchctl bootstrap "gui/$(id -u)" "$AGENT"
+launchctl bootstrap "gui/$(id -u)" "$AGENT" 2>/dev/null || launchctl load -w "$AGENT"
 echo "==> Launch agent installed and started: $AGENT"
 
 # 4. Client only: network watcher so a docked (wired) MacBook never drifts
@@ -179,7 +180,7 @@ if [ "$MODE" = "client" ]; then
 </dict>
 </plist>
 PLIST
-  launchctl bootstrap "gui/$(id -u)" "$NW_AGENT"
+  launchctl bootstrap "gui/$(id -u)" "$NW_AGENT" 2>/dev/null || launchctl load -w "$NW_AGENT"
   echo "==> Network watcher installed: $NW_AGENT (log: $NW_LOG)"
 fi
 

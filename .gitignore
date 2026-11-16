@@ -44,7 +44,6 @@ CMakeFiles/*
 /.vscode
 
 # scripts folder
-/scripts
 
 # Ai helperfilers
 **/[cC]laude.[mM][dD]
