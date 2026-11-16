@@ -127,6 +127,62 @@ fi
 launchctl bootstrap "gui/$(id -u)" "$AGENT"
 echo "==> Launch agent installed and started: $AGENT"
 
+# 4. Client only: network watcher so a docked (wired) MacBook never drifts
+#    onto Wi-Fi for the server link, and reconnects on every cable change.
+if [ "$MODE" = "client" ]; then
+  NW_LABEL="$LABEL.netwatch"
+  NW_AGENT="$AGENT_DIR/$NW_LABEL.plist"
+  NW_SCRIPT="$DEST_APP/Contents/Resources/keymouse-netwatch.sh"
+  NW_LOG="$CONF_DIR/keymouse-netwatch.log"
+
+  if [ -f "$REPO_DIR/scripts/keymouse-netwatch.sh" ]; then
+    cp "$REPO_DIR/scripts/keymouse-netwatch.sh" "$NW_SCRIPT"
+  elif [ ! -f "$NW_SCRIPT" ]; then
+    curl -fsSL "https://raw.githubusercontent.com/LarryHartman/KeyMouse/v1/scripts/keymouse-netwatch.sh" -o "$NW_SCRIPT"
+  fi
+  chmod +x "$NW_SCRIPT"
+
+  # Narrow sudoers rule so the watcher can pin/unpin one host route without
+  # a password. Asks for your password once, here.
+  SUDOERS="/etc/sudoers.d/keymouse-$(whoami)"
+  RULE="$(whoami) ALL=(root) NOPASSWD: /sbin/route -n add -host $SERVER_IP -interface *, /sbin/route -n delete -host $SERVER_IP"
+  if ! sudo -n true 2>/dev/null || [ ! -f "$SUDOERS" ] || ! sudo grep -qF "$SERVER_IP" "$SUDOERS" 2>/dev/null; then
+    echo "==> Adding sudoers rule for route pinning (password prompt)"
+    echo "$RULE" | sudo tee "$SUDOERS" >/dev/null
+    sudo chmod 440 "$SUDOERS"
+  fi
+
+  launchctl bootout "gui/$(id -u)/$NW_LABEL" 2>/dev/null || true
+  cat > "$NW_AGENT" <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>$NW_LABEL</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>$NW_SCRIPT</string>
+    <string>$SERVER_IP</string>
+  </array>
+  <key>RunAtLoad</key><true/>
+  <key>WatchPaths</key>
+  <array>
+    <string>/Library/Preferences/SystemConfiguration/NetworkInterfaces.plist</string>
+    <string>/Library/Preferences/SystemConfiguration/preferences.plist</string>
+    <string>/private/var/run/resolv.conf</string>
+  </array>
+  <key>ThrottleInterval</key><integer>3</integer>
+  <key>LimitLoadToSessionType</key><string>Aqua</string>
+  <key>StandardOutPath</key><string>$NW_LOG</string>
+  <key>StandardErrorPath</key><string>$NW_LOG</string>
+</dict>
+</plist>
+PLIST
+  launchctl bootstrap "gui/$(id -u)" "$NW_AGENT"
+  echo "==> Network watcher installed: $NW_AGENT (log: $NW_LOG)"
+fi
+
 echo
 if [ "$MODE" = "client" ]; then
   echo "Client running in the background; log: $LOG"
