@@ -49,3 +49,4 @@ agent. Run it from a Terminal in that profile.
 - v2: install script takes a mode (server | client <ip>); client profiles run deskflow-core headless from the launch agent; TLS off for LAN.
 - v3: LSUIElement (menu bar only, no Dock icon); scripts/macos-deploy.sh bundles all Qt plugins so the tray icon shows.
 - v4: client install also sets up a network watcher (one launch agent, one bundled script) that pins the server route out the wired dock when present, falls back to Wi-Fi when not, and reconnects the client on every cable change. Adds a narrow sudoers rule for the route pin.
+- v5: per-profile client names; fix SIGTRAP crash on macOS 26+ (TIS keyboard-layout query moved to the main dispatch queue in AppUtilUnix); watcher settle delay 4s.

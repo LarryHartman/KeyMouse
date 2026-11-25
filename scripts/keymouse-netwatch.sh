@@ -22,7 +22,7 @@ mkdir -p "$(dirname "$STATE")"
 log() { echo "[$(date '+%Y-%m-%dT%H:%M:%S')] $*" >> "$LOG"; }
 
 # Debounce: launchd fires several times per change. Wait for things to settle.
-sleep 2
+sleep 4
 
 # Identify Wi-Fi device(s) so we can exclude them.
 WIFI_DEVS="$(networksetup -listallhardwareports 2>/dev/null \
