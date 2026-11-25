@@ -75,6 +75,12 @@ set_key gui/enableUpdateCheck false
 if [ "$MODE" = "client" ]; then
   set_key client/remoteHost "$SERVER_IP"
   set_key gui/autoHide true
+  # Distinct client name per profile so two logged-in profiles never collide
+  # on the server ("server already has a connected client with name ...").
+  HOST_SHORT="$(scutil --get LocalHostName 2>/dev/null || hostname -s)"
+  CLIENT_NAME="${HOST_SHORT}-$(whoami)"
+  set_key core/computerName "$CLIENT_NAME"
+  echo "==> Client name for this profile: $CLIENT_NAME (add it to the iMac server layout)"
 else
   set_key gui/autoHide false
 fi
